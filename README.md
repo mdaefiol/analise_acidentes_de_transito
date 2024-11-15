@@ -1,5 +1,5 @@
 # analise_acidentes_de_transito
-- Exercício em Dupla: Análise Colaborativa de Acidentes de Trânsito no Brasil
+- Exercício em dupla: Análise Colaborativa de Acidentes de Trânsito no Brasil
 
 ## Comandos importantes para desenvolvedores:
 - Para atualizar os requirements do projeto: `pip freeze > requirements.txt`
