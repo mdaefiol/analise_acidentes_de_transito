@@ -1,0 +1,7 @@
+data/*
+*.env
+*.html
+*.csv
+*.pyc
+__pycache__/
+scripts/__pycache__/*
