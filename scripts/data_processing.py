@@ -92,6 +92,9 @@ def consolidate_data():
         # Identificar/remover registros incoerentes
         df_completo = remover_registros_incoerentes(df_completo)
 
+        # Adicionar informações adicionais - Engenharia de Atributos
+        df_completo = adicionar_informacoes(df_completo)
+
         # Salvar o DataFrame consolidado
         output_path = os.path.join(data_path, "dados_consolidados.csv")
         df_completo.to_csv(output_path, index=False, encoding="utf-8")
@@ -172,7 +175,8 @@ def remover_registros_incoerentes(df):
 
     # Validar 'km' (deve ser maior ou igual a 0)
     if "km" in df.columns:
-        df = df[df["km"] >= 0]
+        df["km"] = pd.to_numeric(df["km"], errors='coerce')
+        df = df[df["km"].notna() & (df["km"] >= 0)]
 
     # Validar campos numéricos (não podem ser negativos)
     numeric_columns = [
@@ -227,15 +231,17 @@ def adicionar_informacoes(df):
         # Criar coluna 'ano' (Ano)
         df["ano"] = df["data_inversa"].dt.year
 
-        # Verificar se a data está na lista de feriados
+        # Criar uma lista de feriados para cada ano presente no DataFrame
         df["feriado"] = df["ano"].apply(lambda x: holidays.Brazil(years=x))
-        df["feriado"] = df["data_inversa"].isin(df["feriado"])
+
+        # Verificar se cada data está em um feriado
+        df["feriado"] = df["data_inversa"].apply(lambda x: x in df.loc[x.year == df['ano'], 'feriado'].iloc[0])
 
     # Verificar se a coluna 'horario' existe e está no formato correto
     if "horario" in df.columns:
         # Converter 'horario' para o formato datetime (extrair a parte da hora)
         df["hora"] = pd.to_datetime(
-            df["horario"], format="%H:%M", errors="coerce"
+            df["horario"], format="%H:%M:%S", errors="coerce"
         ).dt.hour
 
         # Classificar o horário em categorias
