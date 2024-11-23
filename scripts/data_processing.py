@@ -7,21 +7,43 @@ files_2021_2023 = ["2021.csv", "2023.csv"]
 files_2022_2024 = ["2022.csv", "2024.csv"]
 
 
+import os
+import pandas as pd
+
+
 def load_and_concat_files(file_list, sep, data_path):
-    # Função para carregar e concatenar arquivos CSV
+    # Função para carregar e concatenar arquivos CSV com diferentes codificações
     dataframes = []
+
+    # Define um dicionário de codificação para os arquivos específicos
+    encoding_dict = {
+        "2021": "latin1",
+        "2023": "latin1",
+        "2022": "utf-8",
+        "2024": "utf-8",
+    }
+
     for file in file_list:
         file_path = os.path.join(data_path, file)
         if os.path.exists(file_path):
             try:
+                # Obtém o encoding com base no nome do arquivo
+                year = file.split(".")[
+                    0
+                ]  # Assuming file name format is like '2021.csv'
+                encoding = encoding_dict.get(
+                    year, "utf-8"
+                )  # Default to "utf-8" if year not found
+
                 df = pd.read_csv(
-                    file_path, encoding="latin1", sep=sep, on_bad_lines="skip"
+                    file_path, encoding=encoding, sep=sep, on_bad_lines="skip"
                 )
                 dataframes.append(df)
             except Exception as e:
                 print(f"Erro ao ler o arquivo {file}: {e}")
         else:
             print(f"Arquivo {file} não encontrado em {data_path}.")
+
     return (
         pd.concat(dataframes, axis=0, ignore_index=True)
         if dataframes
@@ -175,7 +197,7 @@ def remover_registros_incoerentes(df):
 
     # Validar 'km' (deve ser maior ou igual a 0)
     if "km" in df.columns:
-        df["km"] = pd.to_numeric(df["km"], errors='coerce')
+        df["km"] = pd.to_numeric(df["km"], errors="coerce")
         df = df[df["km"].notna() & (df["km"] >= 0)]
 
     # Validar campos numéricos (não podem ser negativos)
@@ -235,7 +257,9 @@ def adicionar_informacoes(df):
         df["feriado"] = df["ano"].apply(lambda x: holidays.Brazil(years=x))
 
         # Verificar se cada data está em um feriado
-        df["feriado"] = df["data_inversa"].apply(lambda x: x in df.loc[x.year == df['ano'], 'feriado'].iloc[0])
+        df["feriado"] = df["data_inversa"].apply(
+            lambda x: "Sim" if x in df.loc[x.year == df["ano"], "feriado"].iloc[0] else "Não"
+        )
 
     # Verificar se a coluna 'horario' existe e está no formato correto
     if "horario" in df.columns:
