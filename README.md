@@ -23,8 +23,10 @@ A aplicação permite explorar os dados por meio de diferentes gráficos interat
 ## 🚀 Como Executar
 Clone o repositório:
 
-`git clone https://github.com/mdaefiol/analise_acidentes_de_transito.git`
-`cd analise_acidentes_de_transito`
+```bash
+git clone https://github.com/mdaefiol/analise_acidentes_de_transito.git
+cd analise_acidentes_de_transito
+```
 
 ### Para desenvolvedores:
 - Para atualizar os requirements do projeto: `pip freeze > requirements.txt`
