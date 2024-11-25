@@ -43,9 +43,10 @@ Os dados utilizados neste projeto devem ser obtidos diretamente do portal da Pol
 Certifique-se de baixar os arquivos para os anos necessários e salvá-los no diretório data/ antes de executar os scripts.
 
 
-## 🗂️ Estrutura de Pastas
+## 🗂️ Estrutura de Pastas  
 A estrutura de pastas do projeto é organizada da seguinte maneira:
 
+```plaintext
 📂 analise_acidentes_de_transito/
 │
 ├── 📂 data/                       # Pasta para armazenar os dados (arquivos CSV)
@@ -54,13 +55,14 @@ A estrutura de pastas do projeto é organizada da seguinte maneira:
 │   ├── 2023.csv                   # Dados de acidentes de 2023
 │   └── 2024.csv                   # Dados de acidentes de 2024
 │
-├── 📂 documentation/              # Documentação adicional
+├── 📂 documentation/               # Documentação adicional
 │   └── Exercicio.pdf              # Exercício ou explicação do projeto
 │
-├── 📂 scripts/                    # Scripts principais de processamento de dados e análises
+├── 📂 scripts/                     # Scripts principais de processamento de dados e análises
 │   ├── app.py                     # Aplicação principal em Streamlit
 │   └── data_processing.py         # Processamento e limpeza de dados
 │
 ├── .gitignore                     # Arquivo para ignorar arquivos temporários
 ├── requirements.txt               # Dependências do projeto
 └── README.md                      # Arquivo de documentação do projeto
+```
