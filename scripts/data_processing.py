@@ -1,15 +1,11 @@
 import pandas as pd
 import os
 import holidays
+import locale
 
 data_path = "/home/hub/Documents/analise_acidentes_de_transito/data"
 files_2021_2023 = ["2021.csv", "2023.csv"]
 files_2022_2024 = ["2022.csv", "2024.csv"]
-
-
-import os
-import pandas as pd
-
 
 def load_and_concat_files(file_list, sep, data_path):
     # Função para carregar e concatenar arquivos CSV com diferentes codificações
@@ -237,11 +233,14 @@ def remover_registros_incoerentes(df):
 def adicionar_informacoes(df):
     # Adiciona novas colunas relevantes para a análise
 
-    # Garantir que a coluna 'data_inversa' está no formato datetime
+    # Garantir que data_inversa está no formato datetime
     if "data_inversa" in df.columns:
         df["data_inversa"] = pd.to_datetime(df["data_inversa"], errors="coerce")
 
-        # Criar coluna 'dia_semana' (Dia da semana)
+        # Configurar para português
+        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+
+        # Criar coluna 'dia_semana' em português
         df["dia_semana"] = df["data_inversa"].dt.day_name()
 
         # Criar coluna 'mes' (Número do mês)
