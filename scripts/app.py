@@ -18,12 +18,12 @@ else:
     st.dataframe(data.head())  # Exibe os dados
 
     # Exibir as informações sobre valores nulos antes e depois do tratamento
-    st.subheader("Informações sobre Valores Nulos")
-    st.write("### Valores nulos antes do tratamento")
-    st.dataframe(null_info_before)
+    #st.subheader("Informações sobre Valores Nulos")
+    #st.write("### Valores nulos antes do tratamento")
+    #st.dataframe(null_info_before)
 
-    st.write("### Valores nulos depois do tratamento")
-    st.dataframe(null_info_after)
+    #st.write("### Valores nulos depois do tratamento")
+    #st.dataframe(null_info_after)
 
     # Filtros para as categorias
     st.subheader("Filtros")
