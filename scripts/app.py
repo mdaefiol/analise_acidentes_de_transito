@@ -15,16 +15,7 @@ if data is None:
     st.error("Erro ao carregar os dados consolidados.")
 else:
     st.success("Dados carregados com sucesso.")
-    st.dataframe(data.head())  # Exibe os dados
-
-    # Exibir as informações sobre valores nulos antes e depois do tratamento
-    #st.subheader("Informações sobre Valores Nulos")
-    #st.write("### Valores nulos antes do tratamento")
-    #st.dataframe(null_info_before)
-
-    #st.write("### Valores nulos depois do tratamento")
-    #st.dataframe(null_info_after)
-
+    
     # Filtros para as categorias
     st.subheader("Filtros")
     ano_filtro = st.selectbox("Escolha o ano", data["ano"].unique())
@@ -318,8 +309,8 @@ else:
     # Exibir título no Streamlit
     st.subheader("Relação entre dia da semana e período do dia")
 
-    # Garantir que os dias da semana sigam a ordem correta
-    dias_da_semana_ordem = [
+    # Garantir que os dias da semana sigam a ordem correta (em inglês)
+    dias_da_semana_ordem_ingles = [
         "Monday",
         "Tuesday",
         "Wednesday",
@@ -328,9 +319,27 @@ else:
         "Saturday",
         "Sunday",
     ]
+
+    # Mapeamento dos dias da semana de inglês para português
+    dias_da_semana_ingles_para_pt = {
+        "Monday": "Segunda-feira",
+        "Tuesday": "Terça-feira",
+        "Wednesday": "Quarta-feira",
+        "Thursday": "Quinta-feira",
+        "Friday": "Sexta-feira",
+        "Saturday": "Sábado",
+        "Sunday": "Domingo",
+    }
+
     data["dia_semana"] = pd.Categorical(
-        data["dia_semana"], categories=dias_da_semana_ordem, ordered=True
+        data["dia_semana"], categories=dias_da_semana_ingles_para_pt, ordered=True
     )
+
+    # Traduzir os dias da semana para o português
+    data["dia_semana_pt"] = data["dia_semana"].map(dias_da_semana_ingles_para_pt)
+
+    # Exibir o DataFrame ordenado conforme os dias da semana em inglês, mas com tradução em português
+    st.dataframe(data.sort_values("dia_semana"))
 
     # Garantir que os períodos do dia sigam a ordem correta
     periodos_dia_ordem = ["Madrugada", "Manhã", "Tarde", "Noite"]
@@ -379,22 +388,3 @@ else:
 
     # Exibindo o gráfico no Streamlit
     st.plotly_chart(fig)
-
-    # Verificação/remoção de duplicatas
-    st.subheader("Verificação e Remoção de Duplicatas")
-
-    # Mostra quantas duplicatas existem
-    num_duplicatas = data.duplicated(subset=None, keep=False).sum()
-
-    st.write(f"Total de registros duplicados: {num_duplicatas}")
-
-    if num_duplicatas > 0:
-        # Remove as duplicatas
-        data_limpa = data.drop_duplicates(keep="first")
-        st.write("Duplicatas removidas com sucesso.")
-    else:
-        data_limpa = data
-        st.write("Nenhuma duplicata encontrada para remoção.")
-
-    # Exibe o dataframe sem duplicatas
-    st.dataframe(data_limpa.head())

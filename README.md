@@ -25,7 +25,7 @@ Clone o repositório:
 
 ```bash
 git clone https://github.com/mdaefiol/analise_acidentes_de_transito.git
-cd analise_acidentes_de_transito
+cd analise_acidentes_de_transito/scripts
 ```
 - Para atualizar os requirements do projeto: `pip freeze > requirements.txt`
 - Para instalar as dependencias do projeto: `pip install -r requirements.txt`
