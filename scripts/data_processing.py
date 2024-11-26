@@ -7,8 +7,10 @@ data_path = "/home/hub/Documents/analise_acidentes_de_transito/data"
 files_2021_2023 = ["2021.csv", "2023.csv"]
 files_2022_2024 = ["2022.csv", "2024.csv"]
 
+# Função para carregar e concatenar arquivos CSV com diferentes codificações
+
+
 def load_and_concat_files(file_list, sep, data_path):
-    # Função para carregar e concatenar arquivos CSV com diferentes codificações
     dataframes = []
 
     # Define um dicionário de codificação para os arquivos específicos
@@ -26,10 +28,10 @@ def load_and_concat_files(file_list, sep, data_path):
                 # Obtém o encoding com base no nome do arquivo
                 year = file.split(".")[
                     0
-                ]  # Assuming file name format is like '2021.csv'
+                ]
                 encoding = encoding_dict.get(
                     year, "utf-8"
-                )  # Default to "utf-8" if year not found
+                )
 
                 df = pd.read_csv(
                     file_path, encoding=encoding, sep=sep, on_bad_lines="skip"
@@ -46,13 +48,15 @@ def load_and_concat_files(file_list, sep, data_path):
         else pd.DataFrame()
     )
 
+# Função para consolidar os dados
+
 
 def consolidate_data():
-    # Função para consolidar os dados
     try:
         # Verifica se o diretório existe
         if not os.path.exists(data_path):
-            raise FileNotFoundError(f"O diretório {data_path} não foi encontrado.")
+            raise FileNotFoundError(
+                f"O diretório {data_path} não foi encontrado.")
 
         # Verifica se os arquivos existem
         missing_files = [
@@ -74,10 +78,12 @@ def consolidate_data():
         )
 
         if df_2021_2023.empty and df_2022_2024.empty:
-            raise ValueError("Nenhum dado foi carregado. Verifique os arquivos.")
+            raise ValueError(
+                "Nenhum dado foi carregado. Verifique os arquivos.")
 
         # Juntar todos os dados
-        df_completo = pd.concat([df_2021_2023, df_2022_2024], axis=0, ignore_index=True)
+        df_completo = pd.concat(
+            [df_2021_2023, df_2022_2024], axis=0, ignore_index=True)
 
         # Verificar e converter a coluna de data
         if "data_inversa" in df_completo.columns:
@@ -91,7 +97,8 @@ def consolidate_data():
             # Verificar se há valores nat após conversao
             if df_completo["data_inversa"].isnull().sum() > 0:
                 print(
-                    f"Warning: {df_completo['data_inversa'].isnull().sum()} datas não foram convertidas corretamente."
+                    f"Warning: {df_completo['data_inversa'].isnull(
+                    ).sum()} datas não foram convertidas corretamente."
                 )
 
             # Criar a coluna 'ano'
@@ -108,10 +115,14 @@ def consolidate_data():
         print(f"Removidas {df_completo.duplicated().sum()} duplicatas.")
 
         # Identificar/remover registros incoerentes
+        print("Removendo dados incoerentes.")
         df_completo = remover_registros_incoerentes(df_completo)
+        print("Dados incoerentes removidos.")
 
         # Adicionar informações adicionais - Engenharia de Atributos
+        print("Adicionando informacoes.")
         df_completo = adicionar_informacoes(df_completo)
+        print("Informacoes adicionadas com sucesso.")
 
         # Salvar o DataFrame consolidado
         output_path = os.path.join(data_path, "dados_consolidados.csv")
@@ -124,9 +135,10 @@ def consolidate_data():
         print(f"Erro ao consolidar os dados: {e}")
         return None, None, None
 
+# Função para tratar valores nulos no DataFrame: numéricos com a mediana e categóricos com a moda
+
 
 def tratar_valores_nulos(df):
-    # Função para tratar valores nulos no DataFrame: numéricos com a mediana e categóricos com a moda
     # Armazenar número de valores nulos antes do tratamento
     null_info_before = df.isnull().sum()
 
@@ -134,23 +146,25 @@ def tratar_valores_nulos(df):
     for coluna in df.select_dtypes(include=["float64", "int64"]).columns:
         if df[coluna].isnull().sum() > 0:
             df[coluna] = df[coluna].fillna(df[coluna].median())  # mediana
-            print(f"Valores nulos na coluna {coluna} foram substituídos pela mediana.")
+            print(f"Valores nulos na coluna {
+                  coluna} foram substituídos pela mediana.")
 
     # Substitui valores nulos categórias pela moda
     for coluna in df.select_dtypes(include=["object"]).columns:
         if df[coluna].isnull().sum() > 0:
             df[coluna] = df[coluna].fillna(df[coluna].mode()[0])  # moda
-            print(f"Valores nulos na coluna {coluna} foram substituídos pela moda.")
+            print(f"Valores nulos na coluna {
+                  coluna} foram substituídos pela moda.")
 
     # Armazenar número de valores nulos após tratamento
     null_info_after = df.isnull().sum()
 
     return null_info_before, null_info_after
 
+# Função para remover registros incoerentes
+
 
 def remover_registros_incoerentes(df):
-    # Função para remover registros incoerentes
-    # Remover registros onde a data é nula
     if "data_inversa" in df.columns:
         df = df[df["data_inversa"].notnull()]
 
@@ -231,64 +245,49 @@ def remover_registros_incoerentes(df):
 
 # Engenharia de Atributos
 def adicionar_informacoes(df):
-    # Adiciona novas colunas relevantes para a análise
+    import numpy as np
 
     # Garantir que data_inversa está no formato datetime
     if "data_inversa" in df.columns:
-        df["data_inversa"] = pd.to_datetime(df["data_inversa"], errors="coerce")
+        df["data_inversa"] = pd.to_datetime(
+            df["data_inversa"], errors="coerce")
 
-        # Configurar para português
+        # Configurar o locale apenas uma vez
         locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
-        # Criar coluna 'dia_semana' em português
+        # Criar novas colunas relacionadas a data
         df["dia_semana"] = df["data_inversa"].dt.day_name()
-
-        # Criar coluna 'mes' (Número do mês)
         df["mes"] = df["data_inversa"].dt.month
-
-        # Criar coluna 'nome_mes' (Nome do mês)
         df["nome_mes"] = df["data_inversa"].dt.strftime("%B")
-
-        # Criar coluna 'ano' (Ano)
         df["ano"] = df["data_inversa"].dt.year
 
-        # Criar uma lista de feriados para cada ano presente no DataFrame
-        df["feriado"] = df["ano"].apply(lambda x: holidays.Brazil(years=x))
-
-        # Verificar se cada data está em um feriado
-        df["feriado"] = df["data_inversa"].apply(
-            lambda x: "Sim" if x in df.loc[x.year == df["ano"], "feriado"].iloc[0] else "Não"
+        # Criar coluna de feriados
+        anos = df["ano"].dropna().unique()
+        feriados = holidays.Brazil(years=anos)
+        df["feriado"] = df["data_inversa"].map(
+            lambda x: "Sim" if x in feriados else "Não"
         )
 
     # Verificar se a coluna 'horario' existe e está no formato correto
     if "horario" in df.columns:
-        # Converter 'horario' para o formato datetime (extrair a parte da hora)
+        # Converter 'horario' para o formato datetime
         df["hora"] = pd.to_datetime(
-            df["horario"], format="%H:%M:%S", errors="coerce"
-        ).dt.hour
+            df["horario"], format="%H:%M:%S", errors="coerce").dt.hour
 
         # Classificar o horário em categorias
-        df["periodo_dia"] = pd.cut(
-            df["hora"],
-            bins=[-1, 5, 11, 17, 23],  # Definir os intervalos de horas
-            labels=[
-                "Madrugada",
-                "Manhã",
-                "Tarde",
-                "Noite",
-            ],  # Rótulos para as categorias
-            right=True,
-        )
+        bins = [-1, 5, 11, 17, 23]
+        labels = ["Madrugada", "Manhã", "Tarde", "Noite"]
+        df["periodo_dia"] = pd.cut(df["hora"], bins=bins, labels=labels)
 
-        # Remover a coluna auxiliar
+        # Remover a coluna auxiliar 'hora'
         df = df.drop(columns=["hora"])
 
     # Criar categoria para pessoas envolvidas nos acidentes
-    df["faixa_pessoas"] = pd.cut(
-        df["pessoas"],
-        bins=[-1, 5, 20, float("inf")],
-        labels=["Baixo envolvimento", "Médio envolvimento", "Alto envolvimento"],
-        right=True,
-    )
+    if "pessoas" in df.columns:
+        bins_pessoas = [-1, 5, 20, np.inf]
+        labels_pessoas = ["Baixo envolvimento",
+                          "Médio envolvimento", "Alto envolvimento"]
+        df["faixa_pessoas"] = pd.cut(
+            df["pessoas"], bins=bins_pessoas, labels=labels_pessoas)
 
     return df

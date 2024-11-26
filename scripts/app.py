@@ -1,23 +1,41 @@
+import time
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.express as px
 from data_processing import consolidate_data
 
-# Carrega os dados
-st.title("Análise de Acidentes de Trânsito")
-st.subheader("Carregando os dados...")
+# Função para carregamento dos dados e atualizar a barra de progresso
 
-data, null_info_before, null_info_after = consolidate_data()
 
-if data is None:
-    st.error("Erro ao carregar os dados consolidados.")
-else:
-    st.success("Dados carregados com sucesso.")
-    
-    # Filtros para as categorias
-    st.subheader("Filtros")
+def load_data_with_progress():
+    st.title("Análise de Acidentes de Trânsito")
+    # Barra de progresso
+    progress_bar = st.progress(0)
+    progress_text = st.empty()
+
+    # Simulação de carregamento de dados
+    progress_text.text("Iniciando o carregamento dos dados...")
+    for i in range(101):
+        time.sleep(0.05)
+        progress_bar.progress(i)
+
+        # Atualiza o texto com a porcentagem
+        progress_text.text(f"Carregando dados... {i}%")
+    data, null_info_before, null_info_after = consolidate_data()
+
+    if data is None:
+        st.error("Erro ao carregar os dados consolidados.")
+    else:
+        st.success("Dados carregados com sucesso.")
+        progress_bar.progress(100)
+
+    return data
+
+
+# Carregar os dados
+data = load_data_with_progress()
+
+if data is not None:
     ano_filtro = st.selectbox("Escolha o ano", data["ano"].unique())
     uf_filtro = st.selectbox("Escolha a UF", data["uf"].unique())
     tipo_acidente_filtro = st.selectbox(
@@ -25,10 +43,10 @@ else:
     )
 
     # Filtra os dados com base nas escolhas
-    data_filtrada = data[
-        (data["ano"] == ano_filtro)
-        & (data["uf"] == uf_filtro)
-        & (data["tipo_acidente"] == tipo_acidente_filtro)
+    data_filtrada = data[(
+        data["ano"] == ano_filtro) &
+        (data["uf"] == uf_filtro) &
+        (data["tipo_acidente"] == tipo_acidente_filtro)
     ]
 
     # Graficos e visualizações
@@ -46,15 +64,16 @@ else:
     )
 
     if visual_option == "Distribuição":
+        progress_bar = st.progress(0)
         column = st.selectbox(
             "Escolha uma coluna numérica",
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Distribuição de densidade da coluna {column}")
-        fig, ax = plt.subplots()
-        data_filtrada[column].dropna().plot(kind="density", ax=ax)
-        ax.set_title(f"Densidade de {column}")
-        st.pyplot(fig)
+        fig = px.histogram(data_filtrada, x=column,
+                           histnorm='density', nbins=30)
+        fig.update_layout(title=f"Densidade de {column}")
+        st.plotly_chart(fig)
 
     elif visual_option == "Gráfico de Dispersão":
         col1 = st.selectbox(
@@ -65,19 +84,14 @@ else:
             "Escolha a segunda coluna numérica",
             data.select_dtypes(include=["int", "float"]).columns,
         )
+
         # Verifica se as colunas selecionadas são diferentes
         if col1 == col2:
             st.error("As colunas selecionadas devem ser diferentes!")
         else:
             st.write(f"Gráfico de Dispersão entre {col1} e {col2}")
-            fig, ax = plt.subplots()
-            ax.scatter(
-                data_filtrada[col1], data_filtrada[col2], color="blue", alpha=0.5
-            )
-            ax.set_xlabel(col1)
-            ax.set_ylabel(col2)
-            ax.set_title(f"Gráfico de Dispersão entre {col1} e {col2}")
-            st.pyplot(fig)
+            fig = px.scatter(data_filtrada, x=col1, y=col2)
+            st.plotly_chart(fig)
 
     elif visual_option == "Boxplot":
         column = st.selectbox(
@@ -85,10 +99,8 @@ else:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Boxplot da coluna {column}")
-        fig, ax = plt.subplots()
-        sns.boxplot(x=data_filtrada[column], ax=ax)
-        ax.set_title(f"Boxplot de {column}")
-        st.pyplot(fig)
+        fig = px.box(data_filtrada, y=column)
+        st.plotly_chart(fig)
 
     elif visual_option == "Histograma":
         column = st.selectbox(
@@ -96,12 +108,8 @@ else:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Histograma da coluna {column}")
-        fig, ax = plt.subplots()
-        data_filtrada[column].dropna().plot(
-            kind="hist", bins=30, ax=ax, color="skyblue", edgecolor="black"
-        )
-        ax.set_title(f"Histograma de {column}")
-        st.pyplot(fig)
+        fig = px.histogram(data_filtrada, x=column, nbins=30)
+        st.plotly_chart(fig)
 
     elif visual_option == "Análise Temporal":
         column = st.selectbox(
@@ -109,27 +117,22 @@ else:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Análise Temporal da coluna {column}")
+
         data_filtrada["data_inversa"] = pd.to_datetime(
-            data_filtrada["data_inversa"], errors="coerce"
-        )
+            data_filtrada["data_inversa"], errors="coerce")
+
         temporal_data = data_filtrada.groupby(
-            data_filtrada["data_inversa"].dt.to_period("M")
-        )[column].mean()
-        st.line_chart(temporal_data)
+            data_filtrada["data_inversa"].dt.to_period("M"))[column].mean()
 
-    # GRÁFICO DE BARRAS
-    # 1. Top 5 causas mais comuns
+        fig = px.line(temporal_data, y=column,
+                      title=f"Análise Temporal de {column}")
+        st.plotly_chart(fig)
+
+    # Gráfico de barras Top 5 Causas mais comuns
     top_5_causas = data["causa_acidente"].value_counts().nlargest(5)
-
     top_5_causas = top_5_causas.sort_values(ascending=True)
 
-    # Configuração do Streamlit
-    st.title("Análise de Acidentes")
-
-    # Gráfico de barras para as top 5 causas mais comuns
     st.header("Top 5 Causas Mais Comuns dos Acidentes")
-
-    # Criando o gráfico de barras com Plotly
     fig_causas = px.bar(
         top_5_causas,
         x=top_5_causas.values,
@@ -139,47 +142,18 @@ else:
         text=top_5_causas.values,
         color_continuous_scale="Blues",
     )
-
-    # Adiciona tooltips (informações ao passar o mouse sobre as barras)
     fig_causas.update_traces(
         hoverinfo="text",
         texttemplate="%{text}",
         textfont=dict(color="black"),
     )
-
-    # Ajustar o layout para garantir boa apresentação
-    fig_causas.update_layout(
-        plot_bgcolor="#26292e",
-        paper_bgcolor="#26292e",
-        xaxis_title="Número de Acidentes",
-        yaxis_title="Causas dos Acidentes",
-        font=dict(color="black"),
-        # Cor dos títulos dos eixos
-        xaxis_title_font=dict(color="white"),
-        yaxis_title_font=dict(color="white"),
-        # Cor dos valores dos eixos (ticks)
-        xaxis_tickfont=dict(color="white"),
-        yaxis_tickfont=dict(color="white"),
-        # Cor da legenda
-        legend_title_font=dict(color="white"),
-        legend_font=dict(color="white"),
-        # Alterando a cor da escala de cores
-        coloraxis_colorbar_tickfont=dict(color="white"),
-        coloraxis_colorbar_title_font=dict(color="white"),
-    )
-
-    # Exibir o gráfico interativo no Streamlit
     st.plotly_chart(fig_causas)
 
-    # 2. Top 5 tipos mais comuns
+    # Top 5 Tipos mais comuns
     top_5_tipos = data["tipo_acidente"].value_counts().nlargest(5)
-
     top_5_tipos = top_5_tipos.sort_values(ascending=True)
 
-    # Gráfico de barras para os top 5 tipos mais comuns de acidentes
     st.header("Top 5 Tipos Mais Comuns de Acidentes")
-
-    # Criando o gráfico de barras com Plotly
     fig_tipos = px.bar(
         top_5_tipos,
         x=top_5_tipos.values,
@@ -189,128 +163,56 @@ else:
         text=top_5_tipos.values,
         color_continuous_scale="Greens",
     )
-
-    # Ajustar o layout para garantir boa apresentação
-    fig_tipos.update_layout(
-        plot_bgcolor="#26292e",
-        paper_bgcolor="#26292e",
-        xaxis_title="Número de Acidentes",
-        yaxis_title="Tipos de Acidentes",
-        font=dict(color="black"),
-        # Cor dos títulos dos eixos
-        xaxis_title_font=dict(color="white"),
-        yaxis_title_font=dict(color="white"),
-        # Cor dos valores dos eixos (ticks)
-        xaxis_tickfont=dict(color="white"),
-        yaxis_tickfont=dict(color="white"),
-        # Cor da legenda
-        legend_title_font=dict(color="white"),
-        legend_font=dict(color="white"),
-        # Alterando a cor da escala de cores
-        coloraxis_colorbar_tickfont=dict(color="white"),
-        coloraxis_colorbar_title_font=dict(color="white"),
-    )
-
-    # Exibir o gráfico interativo no Streamlit
     st.plotly_chart(fig_tipos)
 
-    # GRÁFICO DE DISPERSÃO
-    # Configurar texto do Streamlit
+    # Gráfico de dispersão entre número de vítimas e condições meteorológicas
     st.header("Relação entre Número de Vítimas e Condições Meteorológicas")
-    st.write(
-        "Este gráfico mostra a relação entre o número de vítimas e as condições meteorológicas nos acidentes."
-    )
-
-    # Contar o número de acidentes com mortos para cada condição meteorológica
-    acidentes_com_mortos = (
-        data.groupby("condicao_metereologica")["mortos"].sum().reset_index()
-    )
-
-    # Criar gráfico de dispersão com Plotly
+    acidentes_com_mortos = data.groupby("condicao_metereologica")[
+        "mortos"].sum().reset_index()
     fig = px.scatter(
         acidentes_com_mortos,
         x="condicao_metereologica",
         y="mortos",
         color="condicao_metereologica",
-        labels={
-            "condicao_metereologica": "Condição Meteorológica",
-            "mortos": "Número Vítimas",
-        },
-        hover_data=["condicao_metereologica", "mortos"],
+        labels={"condicao_metereologica": "Condição Meteorológica",
+                "mortos": "Número Vítimas"},
     )
-
-    # Definir o fundo branco para o gráfico
-    fig.update_layout(
-        plot_bgcolor="#26292e",
-        paper_bgcolor="#26292e",
-        font=dict(color="black"),
-        xaxis_title_font=dict(color="white"),
-        yaxis_title_font=dict(color="white"),
-        xaxis_tickfont=dict(color="white"),
-        yaxis_tickfont=dict(color="white"),
-        legend_title_font=dict(color="white"),
-        legend_font=dict(color="white"),
-    )
-
-    # Exibir o gráfico interativo no Streamlit
     st.plotly_chart(fig)
 
-    # MAPA INTERATIVO
-    # Garantir que as colunas de latitude e longitude sejam convertidas para float
+    # Mapa interativo
     data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce")
     data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce")
-
-    # Passo 2: Filtrar as linhas com NaN nas colunas de latitude ou longitude
     data = data.dropna(subset=["latitude", "longitude"])
 
-    # Contar o número de acidentes por município ou UF
-    acidentes_por_municipio = (
-        data.groupby(["municipio"])["id"]
-        .count()
-        .reset_index(name="quantidade_acidentes")
-    )
-
-    # Unir os dados de acidentes com o dataframe original para que possamos acessar a quantidade de acidentes por município
+    acidentes_por_municipio = data.groupby(
+        ["municipio"])["id"].count().reset_index(name="quantidade_acidentes")
     df_map = data.merge(acidentes_por_municipio, on="municipio", how="left")
 
-    # Criar o mapa interativo com Plotly
     fig = px.scatter_mapbox(
         df_map,
         lat="latitude",
         lon="longitude",
         hover_name="municipio",
-        hover_data={
-            "quantidade_acidentes": True,
-        },
+        hover_data={"quantidade_acidentes": True},
         size="quantidade_acidentes",
         color="quantidade_acidentes",
         color_continuous_scale="Blues",
         template="plotly",
     )
-
-    # Configurar o mapa com a API do Mapbox
     fig.update_layout(
-        plot_bgcolor="#26292e",
-        paper_bgcolor="#26292e",
         mapbox_style="carto-positron",
-        mapbox_center={
-            "lat": df_map["latitude"].mean(),
-            "lon": df_map["longitude"].mean(),
-        },
+        mapbox_center={"lat": df_map["latitude"].mean(
+        ), "lon": df_map["longitude"].mean()},
         mapbox_zoom=5,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
     )
-
-    # Exibir o mapa no Streamlit
-    st.header("Distribuição Geográfica dos Acidentes")
     st.plotly_chart(fig)
 
     # MAPA DE CALOR
     # Exibir título no Streamlit
     st.subheader("Relação entre dia da semana e período do dia")
 
-    # Garantir que os dias da semana sigam a ordem correta (em inglês)
-    dias_da_semana_ordem_ingles = [
+    # Garantir que os dias da semana sigam a ordem correta
+    dias_da_semana_ordem = [
         "Monday",
         "Tuesday",
         "Wednesday",
@@ -319,27 +221,9 @@ else:
         "Saturday",
         "Sunday",
     ]
-
-    # Mapeamento dos dias da semana de inglês para português
-    dias_da_semana_ingles_para_pt = {
-        "Monday": "Segunda-feira",
-        "Tuesday": "Terça-feira",
-        "Wednesday": "Quarta-feira",
-        "Thursday": "Quinta-feira",
-        "Friday": "Sexta-feira",
-        "Saturday": "Sábado",
-        "Sunday": "Domingo",
-    }
-
     data["dia_semana"] = pd.Categorical(
-        data["dia_semana"], categories=dias_da_semana_ingles_para_pt, ordered=True
+        data["dia_semana"], categories=dias_da_semana_ordem, ordered=True
     )
-
-    # Traduzir os dias da semana para o português
-    data["dia_semana_pt"] = data["dia_semana"].map(dias_da_semana_ingles_para_pt)
-
-    # Exibir o DataFrame ordenado conforme os dias da semana em inglês, mas com tradução em português
-    st.dataframe(data.sort_values("dia_semana"))
 
     # Garantir que os períodos do dia sigam a ordem correta
     periodos_dia_ordem = ["Madrugada", "Manhã", "Tarde", "Noite"]
