@@ -66,3 +66,26 @@ A estrutura de pastas do projeto é organizada da seguinte maneira:
 ├── requirements.txt               # Dependências do projeto
 └── README.md                      # Arquivo de documentação do projeto
 ```
+
+## 💡 Insights
+Com base na análise dos dados sobre acidentes de trânsito no Brasil entre 2021 e 2024, foram identificados alguns insights importantes:
+
+- **Principais Causas dos Acidentes**:
+   - A reação tardia ou ineficiente do condutor é a principal causa dos acidentes, representando cerca de 14% dos casos. A ausência de reação do condutor é a segunda causa mais comum, com 13% dos acidentes.
+
+- **Principais Tipos dos Acidentes**:
+   - A colisão transeira é o principal tipo dos acidentes, representando cerca de 20% dos casos. A saída de leito carroçável é o segundo tipo mais comum, com 15% dos acidentes.
+
+- **Fatalidades**:
+   - 67% das fatalidades ocorreram quando a condição metereológica estava com céu claro.
+
+- **Distribuição Geográfica**:
+   - O município de Guarulhos registrou o maior número de acidentes com um total de 2504 acidentes, representando 2% do total de acidentes no Brasil e 21% do total de acidentes no estado de São Paulo.
+
+   - O estado com mais registros de acidentes é o Rio de Janeiro, representando 11% do total de acidentes no Brasil. Por outro lado, o Amazonas é o estado com menor registro de acidentes, representando 0,2% dos casos no país.
+
+- **Período**:
+   - 29% dos acidentes aconteceram no período da noite, entre 18h e 00h. Além disso, 17% dos acidentes aconteceram no sábado e 5% dos acidentes aconteceram no sábado a noite.
+
+- **Análise temporal**:
+   - O maior número de acidentes entre 2021-2024 ocorreu em 2023, 7% a mais do que o número registrado em 2022. Além disso, entre 2021 e 2024, o mês de julho registrou mais ocorrências, 49% a mais do que no mês de novembro.
