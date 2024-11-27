@@ -5,9 +5,8 @@ import plotly.express as px
 import numpy as np
 from data_processing import consolidate_data
 
+
 # Função para carregamento dos dados e atualizar a barra de progresso
-
-
 def load_data_with_progress():
     st.title("Análise de Acidentes de Trânsito")
     # Barra de progresso
@@ -37,18 +36,35 @@ def load_data_with_progress():
 data = load_data_with_progress()
 
 if data is not None:
-    ano_filtro = st.selectbox("Escolha o ano", data["ano"].unique())
-    uf_filtro = st.selectbox("Escolha a UF", data["uf"].unique())
+    # Total de acidentes sem filtro aplicado
+    all_total_acidentes = len(data)
+
+    # Ordenar labels dos meses no filtro
+    meses_ordenados = sorted(
+        data[["mes", "nome_mes"]].drop_duplicates().values, key=lambda x: x[0]
+    )
+    meses_ordenados = [mes[1] for mes in meses_ordenados]
+
+    # Definição dos filtros
+    ano_filtro = st.selectbox("Escolha o ano", ["Todos"] + sorted(data["ano"].unique()))
+    mes_filtro = st.selectbox("Escolha o mês", ["Todos"] + meses_ordenados)
+    uf_filtro = st.selectbox("Escolha a UF", ["Todos"] + sorted(data["uf"].unique()))
     tipo_acidente_filtro = st.selectbox(
-        "Escolha o tipo de acidente", data["tipo_acidente"].unique()
+        "Escolha o tipo de acidente", ["Todos"] + sorted(data["tipo_acidente"].unique())
     )
 
     # Filtra os dados com base nas escolhas
-    data_filtrada = data[
-        (data["ano"] == ano_filtro)
-        & (data["uf"] == uf_filtro)
-        & (data["tipo_acidente"] == tipo_acidente_filtro)
-    ]
+    if ano_filtro != "Todos":
+        data = data[data["ano"] == ano_filtro]
+
+    if mes_filtro != "Todos":
+        data = data[data["nome_mes"] == mes_filtro]
+
+    if uf_filtro != "Todos":
+        data = data[data["uf"] == uf_filtro]
+
+    if tipo_acidente_filtro != "Todos":
+        data = data[data["tipo_acidente"] == tipo_acidente_filtro]
 
     # Graficos e visualizações
     st.subheader("Visualizações")
@@ -71,7 +87,7 @@ if data is not None:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Distribuição de densidade da coluna {column}")
-        fig = px.histogram(data_filtrada, x=column, histnorm="density", nbins=30)
+        fig = px.histogram(data, x=column, histnorm="density", nbins=30)
         fig.update_layout(title=f"Densidade de {column}")
         st.plotly_chart(fig)
 
@@ -90,7 +106,7 @@ if data is not None:
             st.error("As colunas selecionadas devem ser diferentes!")
         else:
             st.write(f"Gráfico de Dispersão entre {col1} e {col2}")
-            fig = px.scatter(data_filtrada, x=col1, y=col2)
+            fig = px.scatter(data, x=col1, y=col2)
             st.plotly_chart(fig)
 
     elif visual_option == "Boxplot":
@@ -99,7 +115,7 @@ if data is not None:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Boxplot da coluna {column}")
-        fig = px.box(data_filtrada, y=column)
+        fig = px.box(data, y=column)
         st.plotly_chart(fig)
 
     elif visual_option == "Histograma":
@@ -108,7 +124,7 @@ if data is not None:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Histograma da coluna {column}")
-        fig = px.histogram(data_filtrada, x=column, nbins=30)
+        fig = px.histogram(data, x=column, nbins=30)
         st.plotly_chart(fig)
 
     elif visual_option == "Análise Temporal":
@@ -118,13 +134,11 @@ if data is not None:
         )
         st.write(f"Análise Temporal da coluna {column}")
 
-        data_filtrada["data_inversa"] = pd.to_datetime(
-            data_filtrada["data_inversa"], errors="coerce"
-        )
+        data["data_inversa"] = pd.to_datetime(data["data_inversa"], errors="coerce")
 
-        temporal_data = data_filtrada.groupby(
-            data_filtrada["data_inversa"].dt.to_period("M")
-        )[column].mean()
+        temporal_data = data.groupby(data["data_inversa"].dt.to_period("M"))[
+            column
+        ].mean()
 
         fig = px.line(temporal_data, y=column, title=f"Análise Temporal de {column}")
         st.plotly_chart(fig)
@@ -136,6 +150,7 @@ if data is not None:
     top_5_causas.columns = ["Causa do Acidente", "Número de Acidentes"]
 
     st.subheader("Top 5 Causas Mais Comuns dos Acidentes")
+
     fig_causas = px.bar(
         top_5_causas,
         x="Número de Acidentes",
@@ -164,6 +179,18 @@ if data is not None:
 
     st.plotly_chart(fig_causas)
 
+    # Insights
+    total_acidentes = len(data)
+    causa_mais_comum = top_5_causas.iloc[4]
+    causa_mais_comum_nome = causa_mais_comum["Causa do Acidente"]
+    causa_mais_comum_acidentes = causa_mais_comum["Número de Acidentes"]
+    causa_mais_comum_percentual = (causa_mais_comum_acidentes / total_acidentes) * 100
+
+    st.write(
+        f"A causa mais comum de acidente é **{causa_mais_comum_nome}**, com um total de **{causa_mais_comum_acidentes}** acidentes, "
+        f"representando **{causa_mais_comum_percentual:.1f}%** do total de acidentes."
+    )
+
     # Top 5 Tipos mais comuns
     top_5_tipos = data["tipo_acidente"].value_counts().nlargest(5)
     top_5_tipos = top_5_tipos.sort_values(ascending=True)
@@ -171,6 +198,7 @@ if data is not None:
     top_5_tipos.columns = ["Tipo do Acidente", "Número de Acidentes"]
 
     st.subheader("Top 5 Tipos Mais Comuns de Acidentes")
+
     fig_tipos = px.bar(
         top_5_tipos,
         x="Número de Acidentes",
@@ -199,11 +227,24 @@ if data is not None:
 
     st.plotly_chart(fig_tipos)
 
+    # Insights
+    tipo_mais_comum = top_5_tipos.iloc[4]
+    tipo_mais_comum_nome = tipo_mais_comum["Tipo do Acidente"]
+    tipo_mais_comum_acidentes = tipo_mais_comum["Número de Acidentes"]
+    tipo_mais_comum_percentual = (tipo_mais_comum_acidentes / total_acidentes) * 100
+
+    st.write(
+        f"O tipo mais comum de acidente é **{tipo_mais_comum_nome}**, com um total de **{tipo_mais_comum_acidentes}** acidentes, "
+        f"representando **{tipo_mais_comum_percentual:.1f}%** do total de acidentes."
+    )
+
     # Gráfico de dispersão entre número de vítimas e condições meteorológicas
     st.subheader("Relação entre Número de Vítimas e Condições Meteorológicas")
+
     acidentes_com_mortos = (
         data.groupby("condicao_metereologica")["mortos"].sum().reset_index()
     )
+
     fig = px.scatter(
         acidentes_com_mortos,
         x="condicao_metereologica",
@@ -222,10 +263,21 @@ if data is not None:
 
     st.plotly_chart(fig)
 
+    # Insights
+    total_mortos = data["mortos"].sum()
+    maior_valor = acidentes_com_mortos["mortos"].max()
+    condicao_com_maior_ocorrencia = acidentes_com_mortos.loc[
+        acidentes_com_mortos["mortos"] == maior_valor, "condicao_metereologica"
+    ].iloc[0]
+    condicao_percentual = (maior_valor / total_mortos) * 100
+
+    st.write(
+        f"A condição meteorológica com mais registros de vítimas fatais é **{condicao_com_maior_ocorrencia}**, com um total de **{maior_valor}** vítimas, "
+        f"representando **{condicao_percentual:.1f}%** do total de vítimas fatais."
+    )
+
     # Mapa interativo
     st.subheader("Ditribuição Geográfica dos Acidentes")
-    # data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce").astype(float)
-    # data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce").astype(float)
 
     data["latitude"] = data["latitude"].str.replace(",", ".").astype(float)
     data["longitude"] = data["longitude"].str.replace(",", ".").astype(float)
@@ -281,8 +333,23 @@ if data is not None:
 
     st.plotly_chart(fig)
 
+    # Insights
+    acidentes_por_municipio_sorted = acidentes_por_municipio.sort_values(
+        by="quantidade_acidentes", ascending=False
+    )
+
+    if uf_filtro == "Todos":
+        st.write(
+            f"A cidade com mais registros de acidentes é **{acidentes_por_municipio_sorted.iloc[0]["municipio"]}**, com um total de **{acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"]}** acidentes, "
+            f"representando **{(acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"] / total_acidentes) * 100:.1f}%** do total de acidentes no Brasil."
+        )
+    else:
+        st.write(
+            f"A cidade com mais registros de acidentes é **{acidentes_por_municipio_sorted.iloc[0]["municipio"]}**, com um total de **{acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"]}** acidentes, "
+            f"representando **{(acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"] / total_acidentes) * 100:.1f}%** do total de acidentes no estado de **{uf_filtro}**."
+        )
+
     # MAPA DE CALOR
-    # Exibir título no Streamlit
     st.subheader("Relação entre dia da semana e período do dia")
 
     # Garantir que os dias da semana sigam a ordem correta
@@ -344,13 +411,14 @@ if data is not None:
         ),
     )
 
-    # Exibindo o gráfico no Streamlit
     st.plotly_chart(fig)
 
     # GRÁFICO DE COLUNAS
     # Analisar número de acidentes por UF
     st.subheader("Número de Acidentes por Estado")
+
     acidentes_uf = data.groupby("uf")["id"].nunique().reset_index(name="acidentes")
+
     fig = px.bar(
         acidentes_uf,
         x="uf",
@@ -363,16 +431,36 @@ if data is not None:
     )
 
     fig.update_traces(texttemplate="%{text}", textposition="inside")
+
     fig.update_layout(
         yaxis_visible=False,
         yaxis_showticklabels=False,
         plot_bgcolor="#26292e",
         paper_bgcolor="#26292e",
     )
+
     fig.update_traces(marker_color="#1f77b4")
 
-    # Exibindo o gráfico no Streamlit
     st.plotly_chart(fig)
+
+    # Insights
+    acidentes_uf_sorted = acidentes_uf.sort_values(by="acidentes", ascending=False)
+
+    acidentes_uf_sorted_ascending = acidentes_uf.sort_values(
+        by="acidentes", ascending=True
+    )
+
+    if uf_filtro == "Todos":
+        st.write(
+            f"O estado com mais registros de acidentes é **{acidentes_uf_sorted.iloc[0]["uf"]}**, com um total de **{acidentes_uf_sorted.iloc[0]["acidentes"]}** acidentes, "
+            f"representando **{(acidentes_uf_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%** do total de acidentes no Brasil, seguido de **{acidentes_uf_sorted.iloc[1]["uf"]}** "
+            f"com **{acidentes_uf_sorted.iloc[1]["acidentes"]}** acidentes. Por outro lado, o estado com menor registro de acidentes é **{acidentes_uf_sorted_ascending.iloc[0]["uf"]}** com **{acidentes_uf_sorted_ascending.iloc[0]["acidentes"]}** acidentes."
+        )
+    else:
+        st.write(
+            f"O estado de **{(uf_filtro)}** registrou um total de **{(acidentes_uf_sorted.iloc[0]["acidentes"])}** acidentes, "
+            f"representando **{(acidentes_uf_sorted.iloc[0]["acidentes"] / all_total_acidentes) * 100:.1f}%** do total de acidentes no Brasil."
+        )
 
     # GRÁFICO DE ROSCA
     # Acidentes em feriados ou não
@@ -380,7 +468,6 @@ if data is not None:
 
     pie_data = data.groupby("feriado")["id"].nunique().reset_index(name="acidentes")
 
-    # Criando o gráfico de rosca com Plotly
     fig = px.pie(pie_data, names="feriado", values="acidentes", hole=0.4)
     fig.update_layout(
         plot_bgcolor="#26292e",
@@ -395,24 +482,56 @@ if data is not None:
         ),
     )
 
-    # Exibindo o gráfico no Streamlit
     st.plotly_chart(fig)
+
+    # Insights
+    pie_data_sorted = pie_data.sort_values(by="acidentes", ascending=False)
+
+    if pie_data_sorted.iloc[0]["feriado"] == "Sim":
+        st.write(
+            f"A maioria dos acidentes (**{(pie_data_sorted.iloc[0]["acidentes"])}** - **{(pie_data_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%**) aconteceram em feriados."
+        )
+    else:
+        st.write(
+            f"A maioria dos acidentes (**{(pie_data_sorted.iloc[0]["acidentes"])}** - **{(pie_data_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%**) aconteceram quando não era feriado."
+        )
 
     # GRÁFICO TEMPORAL
     st.subheader("Análise de acidentes ao longo do tempo")
 
-    # Convertendo a coluna 'data_inversa' para datetime
+    # Periodicidade dinâmica
+    period_map = {"Dia": "D", "Mês": "M", "Ano": "Y"}  # Diário  # Mensal  # Anual
+
+    if mes_filtro == "Todos":
+        idx = 1
+    else:
+        idx = 0
+
+    analise = st.selectbox(
+        "Escolha a periodicidade da análise", ["Dia", "Mês", "Ano"], index=idx
+    )
+
+    selected_period = period_map[analise]
+
     df_agrupado = (
-        data.groupby([data["data_inversa"].dt.to_period("M")])["id"]
+        data.groupby([data["data_inversa"].dt.to_period(selected_period)])["id"]
         .nunique()
         .reset_index(name="quantidade_acidentes")
     )
 
-    # Convertendo a coluna 'data_inversa' de Period para datetime para uso no Plotly
     df_agrupado["data_inversa"] = df_agrupado["data_inversa"].dt.to_timestamp()
 
     # Criando gráfico de linha interativo
-    fig = px.line(df_agrupado, x="data_inversa", y="quantidade_acidentes")
+    fig = px.line(
+        df_agrupado,
+        x="data_inversa",
+        y="quantidade_acidentes",
+        labels={
+            "data_inversa": "Data",
+            "quantidade_acidentes": "Número de Acidentes",
+        },
+    )
+
     fig.update_layout(
         plot_bgcolor="#26292e",
         paper_bgcolor="#26292e",
@@ -426,5 +545,4 @@ if data is not None:
 
     fig.update_traces(line=dict(color="#1f77b4"))
 
-    # Exibindo o gráfico no Streamlit
     st.plotly_chart(fig)
