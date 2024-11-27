@@ -87,5 +87,5 @@ Com base na análise dos dados sobre acidentes de trânsito no Brasil entre 2021
 - **Período**:
    - 29% dos acidentes aconteceram no período da noite, entre 18h e 00h. Além disso, 17% dos acidentes aconteceram no sábado e 5% dos acidentes aconteceram no sábado a noite.
 
-- **Análise temporal**:
+- **Análise Temporal**:
    - O maior número de acidentes entre 2021-2024 ocorreu em 2023, 7% a mais do que o número registrado em 2022. Além disso, entre 2021 e 2024, o mês de julho registrou mais ocorrências, 49% a mais do que no mês de novembro.
