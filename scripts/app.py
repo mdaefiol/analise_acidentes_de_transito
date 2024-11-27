@@ -43,10 +43,10 @@ if data is not None:
     )
 
     # Filtra os dados com base nas escolhas
-    data_filtrada = data[(
-        data["ano"] == ano_filtro) &
-        (data["uf"] == uf_filtro) &
-        (data["tipo_acidente"] == tipo_acidente_filtro)
+    data_filtrada = data[
+        (data["ano"] == ano_filtro)
+        & (data["uf"] == uf_filtro)
+        & (data["tipo_acidente"] == tipo_acidente_filtro)
     ]
 
     # Graficos e visualizações
@@ -70,8 +70,7 @@ if data is not None:
             data.select_dtypes(include=["int", "float"]).columns,
         )
         st.write(f"Distribuição de densidade da coluna {column}")
-        fig = px.histogram(data_filtrada, x=column,
-                           histnorm='density', nbins=30)
+        fig = px.histogram(data_filtrada, x=column, histnorm="density", nbins=30)
         fig.update_layout(title=f"Densidade de {column}")
         st.plotly_chart(fig)
 
@@ -119,77 +118,122 @@ if data is not None:
         st.write(f"Análise Temporal da coluna {column}")
 
         data_filtrada["data_inversa"] = pd.to_datetime(
-            data_filtrada["data_inversa"], errors="coerce")
+            data_filtrada["data_inversa"], errors="coerce"
+        )
 
         temporal_data = data_filtrada.groupby(
-            data_filtrada["data_inversa"].dt.to_period("M"))[column].mean()
+            data_filtrada["data_inversa"].dt.to_period("M")
+        )[column].mean()
 
-        fig = px.line(temporal_data, y=column,
-                      title=f"Análise Temporal de {column}")
+        fig = px.line(temporal_data, y=column, title=f"Análise Temporal de {column}")
         st.plotly_chart(fig)
 
     # Gráfico de barras Top 5 Causas mais comuns
     top_5_causas = data["causa_acidente"].value_counts().nlargest(5)
     top_5_causas = top_5_causas.sort_values(ascending=True)
+    top_5_causas = top_5_causas.reset_index()
+    top_5_causas.columns = ["Causa do Acidente", "Número de Acidentes"]
 
-    st.header("Top 5 Causas Mais Comuns dos Acidentes")
+    st.subheader("Top 5 Causas Mais Comuns dos Acidentes")
     fig_causas = px.bar(
         top_5_causas,
-        x=top_5_causas.values,
-        y=top_5_causas.index,
-        labels={"x": "Número de Acidentes", "y": "Causas dos Acidentes"},
-        color=top_5_causas.values,
-        text=top_5_causas.values,
+        x="Número de Acidentes",
+        y="Causa do Acidente",
+        labels={
+            "Número de Acidentes": "Número de Acidentes",
+            "Causa do Acidente": "Causa do Acidente",
+        },
+        color="Número de Acidentes",
+        text="Número de Acidentes",
         color_continuous_scale="Blues",
+        hover_data={"Número de Acidentes": True, "Causa do Acidente": True},
     )
-    fig_causas.update_traces(
-        hoverinfo="text",
-        texttemplate="%{text}",
-        textfont=dict(color="black"),
+
+    fig_causas.update_layout(
+        xaxis_visible=False,
+        xaxis_showticklabels=False,
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+        font=dict(family="Arial", size=12, color="white"),
+        yaxis=dict(
+            title="",
+        ),
+        coloraxis_showscale=False,
     )
+
     st.plotly_chart(fig_causas)
 
     # Top 5 Tipos mais comuns
     top_5_tipos = data["tipo_acidente"].value_counts().nlargest(5)
     top_5_tipos = top_5_tipos.sort_values(ascending=True)
+    top_5_tipos = top_5_tipos.reset_index()
+    top_5_tipos.columns = ["Tipo do Acidente", "Número de Acidentes"]
 
-    st.header("Top 5 Tipos Mais Comuns de Acidentes")
+    st.subheader("Top 5 Tipos Mais Comuns de Acidentes")
     fig_tipos = px.bar(
         top_5_tipos,
-        x=top_5_tipos.values,
-        y=top_5_tipos.index,
-        labels={"x": "Número de Acidentes", "y": "Tipos de Acidentes"},
-        color=top_5_tipos.values,
-        text=top_5_tipos.values,
+        x="Número de Acidentes",
+        y="Tipo do Acidente",
+        labels={
+            "Número de Acidentes": "Número de Acidentes",
+            "Tipo do Acidente": "Tipo de Acidente",
+        },
+        color="Número de Acidentes",
+        text="Número de Acidentes",
         color_continuous_scale="Greens",
+        hover_data={"Número de Acidentes": True, "Tipo do Acidente": True},
     )
+
+    fig_tipos.update_layout(
+        xaxis_visible=False,
+        xaxis_showticklabels=False,
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+        font=dict(family="Arial", size=12, color="white"),
+        yaxis=dict(
+            title="",
+        ),
+        coloraxis_showscale=False,
+    )
+
     st.plotly_chart(fig_tipos)
 
     # Gráfico de dispersão entre número de vítimas e condições meteorológicas
-    st.header("Relação entre Número de Vítimas e Condições Meteorológicas")
-    acidentes_com_mortos = data.groupby("condicao_metereologica")[
-        "mortos"].sum().reset_index()
+    st.subheader("Relação entre Número de Vítimas e Condições Meteorológicas")
+    acidentes_com_mortos = (
+        data.groupby("condicao_metereologica")["mortos"].sum().reset_index()
+    )
     fig = px.scatter(
         acidentes_com_mortos,
         x="condicao_metereologica",
         y="mortos",
         color="condicao_metereologica",
-        labels={"condicao_metereologica": "Condição Meteorológica",
-                "mortos": "Número Vítimas"},
+        labels={
+            "condicao_metereologica": "Condição Meteorológica",
+            "mortos": "Número de Vítimas",
+        },
     )
+
+    fig.update_layout(
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+    )
+
     st.plotly_chart(fig)
 
     # Mapa interativo
-    data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce")
-    data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce")
-    data = data.dropna(subset=["latitude", "longitude"])
+    st.subheader("Ditribuição Geográfica dos Acidentes")
+    data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce").astype(float)
+    data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce").astype(float)
 
-    acidentes_por_municipio = data.groupby(
-        ["municipio"])["id"].count().reset_index(name="quantidade_acidentes")
-    df_map = data.merge(acidentes_por_municipio, on="municipio", how="left")
+    acidentes_por_municipio = (
+        data.groupby(["municipio", "latitude", "longitude"])["id"]
+        .size()
+        .reset_index(name="quantidade_acidentes")
+    )
 
     fig = px.scatter_mapbox(
-        df_map,
+        acidentes_por_municipio,
         lat="latitude",
         lon="longitude",
         hover_name="municipio",
@@ -200,11 +244,16 @@ if data is not None:
         template="plotly",
     )
     fig.update_layout(
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
         mapbox_style="carto-positron",
-        mapbox_center={"lat": df_map["latitude"].mean(
-        ), "lon": df_map["longitude"].mean()},
+        mapbox_center={
+            "lat": acidentes_por_municipio["latitude"].mean(),
+            "lon": acidentes_por_municipio["longitude"].mean(),
+        },
         mapbox_zoom=5,
     )
+
     st.plotly_chart(fig)
 
     # MAPA DE CALOR
@@ -265,8 +314,76 @@ if data is not None:
             tickfont=dict(family="Arial", size=10, color="white"),
         ),
         coloraxis_colorbar=dict(
-            title="Contagem de IDs",
+            title="Número de Acidentes",
             tickfont=dict(family="Arial", size=10, color="white"),
+        ),
+    )
+
+    # Exibindo o gráfico no Streamlit
+    st.plotly_chart(fig)
+
+    # GRÁFICO DE COLUNAS
+    # Analisar número de acidentes por UF
+    st.subheader("Número de Acidentes por Estado")
+    acidentes_uf = data.groupby("uf")["id"].nunique().reset_index(name="acidentes")
+    fig = px.bar(
+        acidentes_uf,
+        x="uf",
+        y="acidentes",
+        labels={
+            "uf": "UF",
+            "acidentes": "Número de Acidentes",
+        },
+        text="acidentes",
+    )
+
+    fig.update_traces(texttemplate="%{text}", textposition="inside")
+    fig.update_layout(
+        yaxis_visible=False,
+        yaxis_showticklabels=False,
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+    )
+    fig.update_traces(marker_color="#1f77b4")
+
+    # Exibindo o gráfico no Streamlit
+    st.plotly_chart(fig)
+
+    # GRÁFICO DE ROSCA
+    # Acidentes em feriados ou não
+    st.subheader("Número de acidentes em feriados")
+
+    pie_data = data.groupby("feriado")["id"].nunique().reset_index(name="acidentes")
+
+    # Criando o gráfico de rosca com Plotly
+    fig = px.pie(pie_data, names="feriado", values="acidentes", hole=0.4)
+    fig.update_layout(
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+    )
+
+    # Exibindo o gráfico no Streamlit
+    st.plotly_chart(fig)
+
+    # GRÁFICO TEMPORAL
+    st.subheader("Análise de acidentes ao longo do tempo")
+
+    # Convertendo a coluna 'data_inversa' para datetime
+    df_agrupado = data.groupby([data['data_inversa'].dt.to_period('M')])["id"].nunique().reset_index(name="quantidade_acidentes")
+
+    # Convertendo a coluna 'data_inversa' de Period para datetime para uso no Plotly
+    df_agrupado['data_inversa'] = df_agrupado['data_inversa'].dt.to_timestamp()
+
+    # Criando gráfico de linha interativo
+    fig = px.line(df_agrupado, x='data_inversa', y='quantidade_acidentes')
+    fig.update_layout(
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+         xaxis=dict(
+            title="",
+        ),
+        yaxis=dict(
+            title="",
         ),
     )
 
