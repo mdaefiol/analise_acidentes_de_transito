@@ -2,6 +2,7 @@ import time
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
 from data_processing import consolidate_data
 
 # Função para carregamento dos dados e atualizar a barra de progresso
@@ -223,13 +224,31 @@ if data is not None:
 
     # Mapa interativo
     st.subheader("Ditribuição Geográfica dos Acidentes")
-    data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce").astype(float)
-    data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce").astype(float)
+    # data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce").astype(float)
+    # data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce").astype(float)
 
-    acidentes_por_municipio = (
+    data["latitude"] = data["latitude"].str.replace(",", ".").astype(float)
+    data["longitude"] = data["longitude"].str.replace(",", ".").astype(float)
+    data["latitude"] = data["latitude"].round().astype(int)
+    data["longitude"] = data["longitude"].round().astype(int)
+
+    group = (
         data.groupby(["municipio", "latitude", "longitude"])["id"]
         .size()
         .reset_index(name="quantidade_acidentes")
+    )
+
+    # Arredondamento latitude e longitude
+    acidentes_por_municipio = (
+        group.groupby("municipio")
+        .agg(
+            {
+                "latitude": "mean",
+                "longitude": "mean",
+                "quantidade_acidentes": "sum",
+            }
+        )
+        .reset_index()
     )
 
     fig = px.scatter_mapbox(
@@ -237,10 +256,14 @@ if data is not None:
         lat="latitude",
         lon="longitude",
         hover_name="municipio",
-        hover_data={"quantidade_acidentes": True},
+        hover_data={
+            "quantidade_acidentes": True,
+            "latitude": False,
+            "longitude": False,
+        },
         size="quantidade_acidentes",
         color="quantidade_acidentes",
-        color_continuous_scale="Blues",
+        color_continuous_scale="Inferno",
         template="plotly",
     )
     fig.update_layout(
@@ -251,7 +274,9 @@ if data is not None:
             "lat": acidentes_por_municipio["latitude"].mean(),
             "lon": acidentes_por_municipio["longitude"].mean(),
         },
-        mapbox_zoom=5,
+        coloraxis_showscale=False,
+        mapbox_zoom=3,
+        height=500,
     )
 
     st.plotly_chart(fig)
@@ -360,6 +385,14 @@ if data is not None:
     fig.update_layout(
         plot_bgcolor="#26292e",
         paper_bgcolor="#26292e",
+        legend=dict(
+            orientation="v",
+            x=1,
+            y=0.5,
+            xanchor="left",
+            yanchor="middle",
+            font=dict(color="white"),
+        ),
     )
 
     # Exibindo o gráfico no Streamlit
@@ -369,23 +402,29 @@ if data is not None:
     st.subheader("Análise de acidentes ao longo do tempo")
 
     # Convertendo a coluna 'data_inversa' para datetime
-    df_agrupado = data.groupby([data['data_inversa'].dt.to_period('M')])["id"].nunique().reset_index(name="quantidade_acidentes")
+    df_agrupado = (
+        data.groupby([data["data_inversa"].dt.to_period("M")])["id"]
+        .nunique()
+        .reset_index(name="quantidade_acidentes")
+    )
 
     # Convertendo a coluna 'data_inversa' de Period para datetime para uso no Plotly
-    df_agrupado['data_inversa'] = df_agrupado['data_inversa'].dt.to_timestamp()
+    df_agrupado["data_inversa"] = df_agrupado["data_inversa"].dt.to_timestamp()
 
     # Criando gráfico de linha interativo
-    fig = px.line(df_agrupado, x='data_inversa', y='quantidade_acidentes')
+    fig = px.line(df_agrupado, x="data_inversa", y="quantidade_acidentes")
     fig.update_layout(
         plot_bgcolor="#26292e",
         paper_bgcolor="#26292e",
-         xaxis=dict(
+        xaxis=dict(
             title="",
         ),
         yaxis=dict(
             title="",
         ),
     )
+
+    fig.update_traces(line=dict(color="#1f77b4"))
 
     # Exibindo o gráfico no Streamlit
     st.plotly_chart(fig)
