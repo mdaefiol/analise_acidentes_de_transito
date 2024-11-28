@@ -74,7 +74,6 @@ if data is not None:
             "Nenhum",
             "Distribuição",
             "Gráfico de Dispersão",
-            "Análise Temporal",
             "Boxplot",
             "Histograma",
         ],
@@ -125,22 +124,6 @@ if data is not None:
         )
         st.write(f"Histograma da coluna {column}")
         fig = px.histogram(data, x=column, nbins=30)
-        st.plotly_chart(fig)
-
-    elif visual_option == "Análise Temporal":
-        column = st.selectbox(
-            "Escolha uma coluna para análise temporal",
-            data.select_dtypes(include=["int", "float"]).columns,
-        )
-        st.write(f"Análise Temporal da coluna {column}")
-
-        data["data_inversa"] = pd.to_datetime(data["data_inversa"], errors="coerce")
-
-        temporal_data = data.groupby(data["data_inversa"].dt.to_period("M"))[
-            column
-        ].mean()
-
-        fig = px.line(temporal_data, y=column, title=f"Análise Temporal de {column}")
         st.plotly_chart(fig)
 
     # Gráfico de barras Top 5 Causas mais comuns
@@ -546,3 +529,44 @@ if data is not None:
     fig.update_traces(line=dict(color="#1f77b4"))
 
     st.plotly_chart(fig)
+
+    st.subheader("Matriz de correlação")
+
+    variaveis_numericas = data[
+        [
+            "pessoas",
+            "mortos",
+            "feridos_leves",
+            "feridos_graves",
+            "ilesos",
+            "feridos",
+            "veiculos",
+        ]
+    ]
+
+    correlacao = variaveis_numericas.corr()
+    correlacao = correlacao.applymap(lambda x: int(x * 1000) / 1000)
+
+    fig = px.imshow(
+        correlacao,
+        text_auto=True, 
+        color_continuous_scale="RdBu_r", 
+    )
+
+    fig.update_layout(
+        plot_bgcolor="#26292e",
+        paper_bgcolor="#26292e",
+        height=650, 
+    )
+
+    st.plotly_chart(fig)
+
+    np.fill_diagonal(correlacao.values, np.nan)
+
+    correlacao_melted = correlacao.stack()
+
+    correlacao_melted = correlacao_melted.sort_values(ascending=False)
+
+    top_10_correlacoes = correlacao_melted.head(10).reset_index(name="Correlação")
+
+    st.write(top_10_correlacoes)
