@@ -21,7 +21,7 @@ def load_data_with_progress():
 
         # Atualiza o texto com a porcentagem
         progress_text.text(f"Carregando dados... {i}%")
-    data = consolidate_data()
+    data, null_info_before, null_info_after = consolidate_data()
 
     if data is None:
         st.error("Erro ao carregar os dados consolidados.")
@@ -46,11 +46,14 @@ if data is not None:
     meses_ordenados = [mes[1] for mes in meses_ordenados]
 
     # Definição dos filtros
-    ano_filtro = st.selectbox("Escolha o ano", ["Todos"] + sorted(data["ano"].unique()))
+    ano_filtro = st.selectbox(
+        "Escolha o ano", ["Todos"] + sorted(data["ano"].unique()))
     mes_filtro = st.selectbox("Escolha o mês", ["Todos"] + meses_ordenados)
-    uf_filtro = st.selectbox("Escolha a UF", ["Todos"] + sorted(data["uf"].unique()))
+    uf_filtro = st.selectbox(
+        "Escolha a UF", ["Todos"] + sorted(data["uf"].unique()))
     tipo_acidente_filtro = st.selectbox(
-        "Escolha o tipo de acidente", ["Todos"] + sorted(data["tipo_acidente"].unique())
+        "Escolha o tipo de acidente", ["Todos"] +
+        sorted(data["tipo_acidente"].unique())
     )
 
     # Filtra os dados com base nas escolhas
@@ -167,10 +170,12 @@ if data is not None:
     causa_mais_comum = top_5_causas.iloc[4]
     causa_mais_comum_nome = causa_mais_comum["Causa do Acidente"]
     causa_mais_comum_acidentes = causa_mais_comum["Número de Acidentes"]
-    causa_mais_comum_percentual = (causa_mais_comum_acidentes / total_acidentes) * 100
+    causa_mais_comum_percentual = (
+        causa_mais_comum_acidentes / total_acidentes) * 100
 
     st.write(
-        f"A causa mais comum de acidente é **{causa_mais_comum_nome}**, com um total de **{causa_mais_comum_acidentes}** acidentes, "
+        f"A causa mais comum de acidente é **{causa_mais_comum_nome}**, com um total de **{
+            causa_mais_comum_acidentes}** acidentes, "
         f"representando **{causa_mais_comum_percentual:.1f}%** do total de acidentes."
     )
 
@@ -214,10 +219,12 @@ if data is not None:
     tipo_mais_comum = top_5_tipos.iloc[4]
     tipo_mais_comum_nome = tipo_mais_comum["Tipo do Acidente"]
     tipo_mais_comum_acidentes = tipo_mais_comum["Número de Acidentes"]
-    tipo_mais_comum_percentual = (tipo_mais_comum_acidentes / total_acidentes) * 100
+    tipo_mais_comum_percentual = (
+        tipo_mais_comum_acidentes / total_acidentes) * 100
 
     st.write(
-        f"O tipo mais comum de acidente é **{tipo_mais_comum_nome}**, com um total de **{tipo_mais_comum_acidentes}** acidentes, "
+        f"O tipo mais comum de acidente é **{tipo_mais_comum_nome}**, com um total de **{
+            tipo_mais_comum_acidentes}** acidentes, "
         f"representando **{tipo_mais_comum_percentual:.1f}%** do total de acidentes."
     )
 
@@ -255,7 +262,8 @@ if data is not None:
     condicao_percentual = (maior_valor / total_mortos) * 100
 
     st.write(
-        f"A condição meteorológica com mais registros de vítimas fatais é **{condicao_com_maior_ocorrencia}**, com um total de **{maior_valor}** vítimas, "
+        f"A condição meteorológica com mais registros de vítimas fatais é **{
+            condicao_com_maior_ocorrencia}**, com um total de **{maior_valor}** vítimas, "
         f"representando **{condicao_percentual:.1f}%** do total de vítimas fatais."
     )
 
@@ -323,13 +331,17 @@ if data is not None:
 
     if uf_filtro == "Todos":
         st.write(
-            f"A cidade com mais registros de acidentes é **{acidentes_por_municipio_sorted.iloc[0]["municipio"]}**, com um total de **{acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"]}** acidentes, "
-            f"representando **{(acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"] / total_acidentes) * 100:.1f}%** do total de acidentes no Brasil."
+            f"A cidade com mais registros de acidentes é **{acidentes_por_municipio_sorted.iloc[0]["municipio"]}**, com um total de **{
+                acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"]}** acidentes, "
+            f"representando **{(acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"] /
+                                total_acidentes) * 100:.1f}%** do total de acidentes no Brasil."
         )
     else:
         st.write(
-            f"A cidade com mais registros de acidentes é **{acidentes_por_municipio_sorted.iloc[0]["municipio"]}**, com um total de **{acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"]}** acidentes, "
-            f"representando **{(acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"] / total_acidentes) * 100:.1f}%** do total de acidentes no estado de **{uf_filtro}**."
+            f"A cidade com mais registros de acidentes é **{acidentes_por_municipio_sorted.iloc[0]["municipio"]}**, com um total de **{
+                acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"]}** acidentes, "
+            f"representando **{(acidentes_por_municipio_sorted.iloc[0]["quantidade_acidentes"] /
+                                total_acidentes) * 100:.1f}%** do total de acidentes no estado de **{uf_filtro}**."
         )
 
     # MAPA DE CALOR
@@ -400,7 +412,8 @@ if data is not None:
     # Analisar número de acidentes por UF
     st.subheader("Número de Acidentes por Estado")
 
-    acidentes_uf = data.groupby("uf")["id"].nunique().reset_index(name="acidentes")
+    acidentes_uf = data.groupby(
+        "uf")["id"].nunique().reset_index(name="acidentes")
 
     fig = px.bar(
         acidentes_uf,
@@ -427,7 +440,8 @@ if data is not None:
     st.plotly_chart(fig)
 
     # Insights
-    acidentes_uf_sorted = acidentes_uf.sort_values(by="acidentes", ascending=False)
+    acidentes_uf_sorted = acidentes_uf.sort_values(
+        by="acidentes", ascending=False)
 
     acidentes_uf_sorted_ascending = acidentes_uf.sort_values(
         by="acidentes", ascending=True
@@ -435,21 +449,27 @@ if data is not None:
 
     if uf_filtro == "Todos":
         st.write(
-            f"O estado com mais registros de acidentes é **{acidentes_uf_sorted.iloc[0]["uf"]}**, com um total de **{acidentes_uf_sorted.iloc[0]["acidentes"]}** acidentes, "
-            f"representando **{(acidentes_uf_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%** do total de acidentes no Brasil, seguido de **{acidentes_uf_sorted.iloc[1]["uf"]}** "
-            f"com **{acidentes_uf_sorted.iloc[1]["acidentes"]}** acidentes. Por outro lado, o estado com menor registro de acidentes é **{acidentes_uf_sorted_ascending.iloc[0]["uf"]}** com **{acidentes_uf_sorted_ascending.iloc[0]["acidentes"]}** acidentes."
+            f"O estado com mais registros de acidentes é **{acidentes_uf_sorted.iloc[0]["uf"]}**, com um total de **{
+                acidentes_uf_sorted.iloc[0]["acidentes"]}** acidentes, "
+            f"representando **{(acidentes_uf_sorted.iloc[0]["acidentes"] / total_acidentes) *
+                               100:.1f}%** do total de acidentes no Brasil, seguido de **{acidentes_uf_sorted.iloc[1]["uf"]}** "
+            f"com **{acidentes_uf_sorted.iloc[1]["acidentes"]}** acidentes. Por outro lado, o estado com menor registro de acidentes é **{
+                acidentes_uf_sorted_ascending.iloc[0]["uf"]}** com **{acidentes_uf_sorted_ascending.iloc[0]["acidentes"]}** acidentes."
         )
     else:
         st.write(
-            f"O estado de **{(uf_filtro)}** registrou um total de **{(acidentes_uf_sorted.iloc[0]["acidentes"])}** acidentes, "
-            f"representando **{(acidentes_uf_sorted.iloc[0]["acidentes"] / all_total_acidentes) * 100:.1f}%** do total de acidentes no Brasil."
+            f"O estado de **{(uf_filtro)}** registrou um total de **{
+                (acidentes_uf_sorted.iloc[0]["acidentes"])}** acidentes, "
+            f"representando **{(acidentes_uf_sorted.iloc[0]["acidentes"] /
+                                all_total_acidentes) * 100:.1f}%** do total de acidentes no Brasil."
         )
 
     # GRÁFICO DE ROSCA
     # Acidentes em feriados ou não
     st.subheader("Número de acidentes em feriados")
 
-    pie_data = data.groupby("feriado")["id"].nunique().reset_index(name="acidentes")
+    pie_data = data.groupby("feriado")[
+        "id"].nunique().reset_index(name="acidentes")
 
     fig = px.pie(pie_data, names="feriado", values="acidentes", hole=0.4)
     fig.update_layout(
@@ -472,18 +492,21 @@ if data is not None:
 
     if pie_data_sorted.iloc[0]["feriado"] == "Sim":
         st.write(
-            f"A maioria dos acidentes (**{(pie_data_sorted.iloc[0]["acidentes"])}** - **{(pie_data_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%**) aconteceram em feriados."
+            f"A maioria dos acidentes (**{(pie_data_sorted.iloc[0]["acidentes"])}** - **{(
+                pie_data_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%**) aconteceram em feriados."
         )
     else:
         st.write(
-            f"A maioria dos acidentes (**{(pie_data_sorted.iloc[0]["acidentes"])}** - **{(pie_data_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%**) aconteceram quando não era feriado."
+            f"A maioria dos acidentes (**{(pie_data_sorted.iloc[0]["acidentes"])}** - **{(
+                pie_data_sorted.iloc[0]["acidentes"] / total_acidentes) * 100:.1f}%**) aconteceram quando não era feriado."
         )
 
     # GRÁFICO TEMPORAL
     st.subheader("Análise de acidentes ao longo do tempo")
 
     # Periodicidade dinâmica
-    period_map = {"Dia": "D", "Mês": "M", "Ano": "Y"}  # Diário  # Mensal  # Anual
+    # Diário  # Mensal  # Anual
+    period_map = {"Dia": "D", "Mês": "M", "Ano": "Y"}
 
     if mes_filtro == "Todos":
         idx = 1
@@ -497,7 +520,8 @@ if data is not None:
     selected_period = period_map[analise]
 
     df_agrupado = (
-        data.groupby([data["data_inversa"].dt.to_period(selected_period)])["id"]
+        data.groupby([data["data_inversa"].dt.to_period(selected_period)])[
+            "id"]
         .nunique()
         .reset_index(name="quantidade_acidentes")
     )
@@ -568,6 +592,7 @@ if data is not None:
 
     correlacao_melted = correlacao_melted.sort_values(ascending=False)
 
-    top_10_correlacoes = correlacao_melted.head(10).reset_index(name="Correlação")
+    top_10_correlacoes = correlacao_melted.head(
+        10).reset_index(name="Correlação")
 
     st.write(top_10_correlacoes)
