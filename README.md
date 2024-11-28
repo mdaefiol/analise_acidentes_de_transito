@@ -55,9 +55,6 @@ A estrutura de pastas do projeto é organizada da seguinte maneira:
 │   ├── 2023.csv                   # Dados de acidentes de 2023
 │   └── 2024.csv                   # Dados de acidentes de 2024
 │
-├── 📂 documentation/              # Documentação adicional
-│   └── Exercicio.pdf              # Exercício ou explicação do projeto
-│
 ├── 📂 scripts/                    # Scripts principais de processamento de dados e análises
 │   ├── app.py                     # Aplicação principal em Streamlit
 │   └── data_processing.py         # Processamento e limpeza de dados
