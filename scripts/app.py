@@ -21,7 +21,7 @@ def load_data_with_progress():
 
         # Atualiza o texto com a porcentagem
         progress_text.text(f"Carregando dados... {i}%")
-    data, null_info_before, null_info_after = consolidate_data()
+    data = consolidate_data()
 
     if data is None:
         st.error("Erro ao carregar os dados consolidados.")
@@ -530,6 +530,7 @@ if data is not None:
 
     st.plotly_chart(fig)
 
+    # MATRIZ DE CORRELAÇÃO
     st.subheader("Matriz de correlação")
 
     variaveis_numericas = data[
@@ -549,14 +550,14 @@ if data is not None:
 
     fig = px.imshow(
         correlacao,
-        text_auto=True, 
-        color_continuous_scale="RdBu_r", 
+        text_auto=True,
+        color_continuous_scale="RdBu_r",
     )
 
     fig.update_layout(
         plot_bgcolor="#26292e",
         paper_bgcolor="#26292e",
-        height=650, 
+        height=650,
     )
 
     st.plotly_chart(fig)
