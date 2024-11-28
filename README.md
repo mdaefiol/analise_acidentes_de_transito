@@ -40,7 +40,7 @@ Os dados utilizados neste projeto devem ser obtidos diretamente do portal da Pol
 
 🌐 Portal de Dados Abertos da PRF (https://www.gov.br/prf/pt-br/acesso-a-informacao/dados-abertos/dados-abertos-da-prf).
 
-Certifique-se de baixar os arquivos para os anos necessários e salvá-los no diretório data/ antes de executar os scripts.
+Certifique-se de baixar os arquivos para os anos necessários e salvá-los no diretório data/ (que deve ser criada manualmente) antes de executar os scripts.
 
 
 ## 🗂️ Estrutura de Pastas  
@@ -49,7 +49,7 @@ A estrutura de pastas do projeto é organizada da seguinte maneira:
 ```plaintext
 📂 analise_acidentes_de_transito/
 │
-├── 📂 data/                       # Pasta para armazenar os dados (arquivos CSV)
+├── 📂 data/                       # Pasta para armazenar os dados (arquivos CSV,  essa pasta deve ser criada no repositório)
 │   ├── 2021.csv                   # Dados de acidentes de 2021
 │   ├── 2022.csv                   # Dados de acidentes de 2022
 │   ├── 2023.csv                   # Dados de acidentes de 2023
